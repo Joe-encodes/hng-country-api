@@ -26,4 +26,3 @@ Homestead.yaml
 Thumbs.db
 database/database.sqlite
 storage/app/cache/
-*.pem
