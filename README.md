@@ -1,406 +1,263 @@
-# HNG Country & Currency Exchange API
+# Country Currency & Exchange API
 
-A RESTful API that fetches country data from external APIs, stores it in MySQL, and provides CRUD operations with exchange rates and estimated GDP calculations.
+A RESTful API that fetches country data from external APIs, stores it in a database, and provides CRUD operations with currency exchange rate calculations.
 
-## 🎯 Features
+## 🚀 Features
 
-- Fetch country data from [restcountries.com](https://restcountries.com)
-- Get exchange rates from [open.er-api.com](https://open.er-api.com)
-- Calculate estimated GDP with random multiplier
-- CRUD operations for countries
-- Filtering and sorting by region, currency, GDP, population
-- Generate summary images with top 5 countries by GDP
-- Full Docker support
-- Comprehensive test coverage
+- **External API Integration**: Fetches country data from [REST Countries API](https://restcountries.com/v2/all) and exchange rates from [Open Exchange Rates API](https://open.er-api.com/v6/latest/USD)
+- **GDP Estimation**: Calculates estimated GDP using population × random(1000-2000) ÷ exchange_rate
+- **CRUD Operations**: Full Create, Read, Update, Delete operations for countries
+- **Filtering & Sorting**: Support for region, currency, and GDP/population sorting
+- **Image Generation**: Automatically generates summary images with top countries by GDP
+- **Comprehensive Error Handling**: Consistent JSON error responses
+- **Database Caching**: Efficient bulk upsert operations for performance
 
-## 📋 Requirements
+## 📋 API Endpoints
 
-- PHP 8.3+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/countries/refresh` | Fetch all countries and exchange rates, then cache them |
+| `GET` | `/api/countries` | Get all countries (supports filters: `?region=Africa`, `?currency=NGN`, `?sort=gdp_desc`) |
+| `GET` | `/api/countries/{name}` | Get one country by name |
+| `DELETE` | `/api/countries/{name}` | Delete a country record |
+| `GET` | `/api/status` | Show total countries and last refresh timestamp |
+| `GET` | `/api/countries/image` | Serve summary image |
+
+## 🛠️ Tech Stack
+
+- **Backend**: Laravel 12 (PHP 8.2+)
+- **Database**: MySQL (with Aiven cloud hosting)
+- **Image Processing**: GD Library
+- **Testing**: PHPUnit with comprehensive test suite
+- **Deployment**: Docker + Koyeb
+
+## 📦 Installation & Setup
+
+### Prerequisites
+
+- PHP 8.2 or higher
 - Composer
-- MySQL 8.0+
-- Docker & Docker Compose (for containerized deployment)
+- MySQL database
+- Docker (for deployment)
 
-## 🚀 Quick Start with Docker
+### Local Development
 
-### 1. Clone the Repository
-
+1. **Clone the repository**
 ```bash
-git clone <repository-url>
+   git clone <your-repo-url>
 cd hng-country-api
 ```
 
-### 2. Start Docker Containers
-
-```bash
-docker-compose up -d --build
-```
-
-### 3. Run Migrations
-
-```bash
-docker exec -it hng_country_app php artisan migrate
-```
-
-### 4. Generate Application Key
-
-```bash
-docker exec -it hng_country_app php artisan key:generate
-```
-
-The API will be available at `http://localhost:8000`
-
-## 🔧 Local Development Setup
-
-### 1. Install Dependencies
-
+2. **Install dependencies**
 ```bash
 composer install
 ```
 
-### 2. Environment Configuration
-
-Copy `.env.example` to `.env` (already done):
-
+3. **Environment setup**
 ```bash
+   cp .env.example .env
 php artisan key:generate
 ```
 
-Configure your database settings in `.env`:
-
+4. **Configure database**
+   Update `.env` with your database credentials:
 ```env
 DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
+   DB_HOST=your-mysql-host
 DB_PORT=3306
-DB_DATABASE=hng
-DB_USERNAME=root
-DB_PASSWORD=your_password
-```
+   DB_DATABASE=your-database
+   DB_USERNAME=your-username
+   DB_PASSWORD=your-password
+   ```
 
-### 3. Run Migrations
-
+5. **Run migrations**
 ```bash
 php artisan migrate
 ```
 
-### 4. Start Development Server
-
+6. **Start the development server**
 ```bash
 php artisan serve
 ```
 
-The API will be available at `http://localhost:8000`
+7. **Visit the API**
+   - API Base URL: `http://localhost:8000/api`
+   - Welcome Page: `http://localhost:8000`
 
-## 📡 API Endpoints
+### Testing
 
-### 1. Refresh Countries Data
-
-Fetch fresh data from external APIs and update/insert countries in database.
-
-**Endpoint:** `POST /api/countries/refresh`
-
-**Response:**
-```json
-{
-  "total_countries": 250,
-  "last_refreshed_at": "2025-01-25T12:00:00Z"
-}
-```
-
-**Example:**
-```bash
-curl -X POST http://localhost:8000/api/countries/refresh
-```
-
-### 2. Get All Countries
-
-Retrieve all countries with optional filters and sorting.
-
-**Endpoint:** `GET /api/countries`
-
-**Query Parameters:**
-- `region` - Filter by region (e.g., Africa, Europe)
-- `currency` - Filter by currency code (e.g., NGN, USD)
-- `sort` - Sort by `gdp_desc`, `gdp_asc`, `population_desc`, `population_asc`
-
-**Response:**
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "name": "Nigeria",
-      "capital": "Abuja",
-      "region": "Africa",
-      "population": 206139589,
-      "currency_code": "NGN",
-      "exchange_rate": 1600.23,
-      "estimated_gdp": 25767448125.2,
-      "flag_url": "https://flagcdn.com/ng.svg",
-      "last_refreshed_at": "2025-01-25T12:00:00Z"
-    }
-  ],
-  "count": 2,
-  "filters_applied": {
-    "region": "Africa",
-    "currency": "NGN",
-    "sort": "gdp_desc"
-  }
-}
-```
-
-**Examples:**
-```bash
-# Get all countries
-curl http://localhost:8000/api/countries
-
-# Filter by region
-curl "http://localhost:8000/api/countries?region=Africa"
-
-# Filter by currency
-curl "http://localhost:8000/api/countries?currency=NGN"
-
-# Sort by GDP descending
-curl "http://localhost:8000/api/countries?sort=gdp_desc"
-
-# Combined filters
-curl "http://localhost:8000/api/countries?region=Africa&currency=NGN&sort=gdp_desc"
-```
-
-### 3. Get Country by Name
-
-**Endpoint:** `GET /api/countries/{name}`
-
-**Response:**
-```json
-{
-  "id": 1,
-  "name": "Nigeria",
-  "capital": "Abuja",
-  "region": "Africa",
-  "population": 206139589,
-  "currency_code": "NGN",
-  "exchange_rate": 1600.23,
-  "estimated_gdp": 25767448125.2,
-  "flag_url": "https://flagcdn.com/ng.svg",
-  "last_refreshed_at": "2025-01-25T12:00:00Z"
-}
-```
-
-**Example:**
-```bash
-curl http://localhost:8000/api/countries/Nigeria
-```
-
-### 4. Delete Country
-
-**Endpoint:** `DELETE /api/countries/{name}`
-
-**Response:** `204 No Content`
-
-**Example:**
-```bash
-curl -X DELETE http://localhost:8000/api/countries/Nigeria
-```
-
-### 5. Get Status
-
-**Endpoint:** `GET /api/status`
-
-**Response:**
-```json
-{
-  "total_countries": 250,
-  "last_refreshed_at": "2025-01-25T12:00:00Z"
-}
-```
-
-**Example:**
-```bash
-curl http://localhost:8000/api/status
-```
-
-### 6. Get Summary Image
-
-**Endpoint:** `GET /api/countries/image`
-
-**Response:** PNG image with summary statistics
-
-**Example:**
-```bash
-curl http://localhost:8000/api/countries/image -o summary.png
-```
-
-## 🧪 Testing
-
-Run the test suite:
+Run the comprehensive test suite:
 
 ```bash
+# Run all tests
 php artisan test
+
+# Run specific test suites
+php artisan test --testsuite=Feature
+php artisan test --testsuite=Unit
+
+# Run with coverage
+php artisan test --coverage
 ```
 
-Or with Docker:
+## 🌐 Deployment on Koyeb
 
+### 1. Prepare for Deployment
+
+Ensure your `Dockerfile` and `docker-compose.yml` are properly configured.
+
+### 2. Deploy to Koyeb
+
+1. **Create a Koyeb account** and connect your GitHub repository
+2. **Create a new app** and select your repository
+3. **Configure build settings**:
+   - Build Method: Dockerfile
+   - Dockerfile Path: `./Dockerfile`
+
+4. **Set environment variables**:
+   ```
+   DB_CONNECTION=mysql
+   DB_HOST=your-aiven-mysql-host
+   DB_PORT=22962
+   DB_DATABASE=defaultdb
+   DB_USERNAME=avnadmin
+   DB_PASSWORD=your-aiven-password
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_KEY=your-generated-app-key
+   ```
+
+5. **Deploy** and wait for the build to complete
+
+6. **Run migrations** (via Koyeb console or SSH):
 ```bash
-docker exec -it hng_country_app php artisan test
+   php artisan migrate --force
+   php artisan storage:link
+   ```
+
+### 3. Post-Deployment
+
+- **Test your endpoints** using the deployed URL
+- **Refresh countries data**: `POST /countries/refresh`
+- **Verify all endpoints** are working correctly
+
+## 📊 API Usage Examples
+
+### Refresh Countries Data
+```bash
+curl -X POST https://your-app.koyeb.app/api/countries/refresh
 ```
 
-## 📁 Project Structure
-
-```
-hng-country-api/
-├── app/
-│   ├── Http/Controllers/CountryController.php
-│   ├── Models/Country.php
-│   └── Services/CountryService.php
-├── database/
-│   ├── factories/CountryFactory.php
-│   └── migrations/2025_01_01_000000_create_countries_table.php
-├── routes/
-│   └── api.php
-├── tests/
-│   └── Feature/CountryApiTest.php
-├── Dockerfile
-├── docker-compose.yml
-└── nginx/conf.d/default.conf
+### Get All Countries
+```bash
+curl https://your-app.koyeb.app/api/countries
 ```
 
-## 🎨 How It Works
+### Filter by Region
+```bash
+curl https://your-app.koyeb.app/api/countries?region=Africa
+```
 
-### Refresh Process
+### Sort by GDP (Descending)
+```bash
+curl https://your-app.koyeb.app/api/countries?sort=gdp_desc
+```
 
-1. Fetches countries from `restcountries.com`
-2. Fetches exchange rates from `open.er-api.com`
-3. For each country:
-   - Extracts first currency code
-   - Matches with exchange rates
-   - Calculates `estimated_gdp = population × random(1000-2000) ÷ exchange_rate`
-   - Upserts to database (updates if exists, inserts if new)
-4. Generates summary image with top 5 countries by GDP
-5. Returns total count and timestamp
+### Get Specific Country
+```bash
+curl https://your-app.koyeb.app/api/countries/Nigeria
+```
 
-### Edge Cases Handled
+### Get API Status
+```bash
+curl https://your-app.koyeb.app/api/status
+```
 
-- ✅ Countries with no currencies → set `estimated_gdp = 0`
-- ✅ Currency not found in exchange rates → set rates and GDP to `null`
-- ✅ Missing population or name → skip with logging
-- ✅ External API failures → return 503 without modifying database
-- ✅ Case-insensitive country name matching
-- ✅ Multiple currencies → use first currency only
+## 🧪 Testing Strategy
 
-## 🔒 Error Handling
+The project includes comprehensive tests covering:
 
-All endpoints return consistent JSON error responses:
+- **External API Integration**: Mocked HTTP responses for reliable testing
+- **Database Operations**: Bulk upsert, filtering, sorting
+- **Error Handling**: 400, 404, 500, 503 responses
+- **Currency Logic**: Multiple currencies, missing currencies, missing exchange rates
+- **GDP Calculation**: Random multiplier validation
+- **Image Generation**: Summary image creation and serving
+- **Validation**: Query parameter validation
 
-- **400 Bad Request:**
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DB_CONNECTION` | Database driver (mysql) | Yes |
+| `DB_HOST` | Database host | Yes |
+| `DB_PORT` | Database port | Yes |
+| `DB_DATABASE` | Database name | Yes |
+| `DB_USERNAME` | Database username | Yes |
+| `DB_PASSWORD` | Database password | Yes |
+| `APP_ENV` | Application environment | Yes |
+| `APP_DEBUG` | Debug mode | Yes |
+| `APP_KEY` | Application encryption key | Yes |
+
+### External APIs
+
+- **Countries API**: `https://restcountries.com/v2/all?fields=name,capital,region,population,flag,currencies`
+- **Exchange Rates API**: `https://open.er-api.com/v6/latest/USD`
+
+## 📈 Performance Optimizations
+
+- **Bulk Upsert**: Uses Laravel's `upsert()` method for efficient database operations
+- **Chunked Processing**: Processes countries in chunks of 500 to prevent memory issues
+- **Caching**: Database caching for frequently accessed data
+- **Image Optimization**: Efficient GD library usage for summary images
+
+## 🐛 Error Handling
+
+The API returns consistent JSON error responses:
+
 ```json
 {
-  "error": "Validation failed",
-  "details": {
-    "currency_code": "is required"
-  }
+  "error": "Error message",
+  "details": "Additional details (optional)"
 }
 ```
 
-- **404 Not Found:**
-```json
-{
-  "error": "Country not found"
-}
-```
+### Error Codes
 
-- **500 Internal Server Error:**
-```json
-{
-  "error": "Internal server error"
-}
-```
-
-- **503 Service Unavailable:**
-```json
-{
-  "error": "External data source unavailable",
-  "details": "Could not fetch data from restcountries.com"
-}
-```
-
-## 🚀 Deployment
-
-### Docker Production Deployment
-
-1. Build and start containers:
-```bash
-docker-compose up -d --build
-```
-
-2. Run migrations:
-```bash
-docker exec -it hng_country_app php artisan migrate --force
-```
-
-3. Set production environment:
-```bash
-docker exec -it hng_country_app php artisan config:cache
-docker exec -it hng_country_app php artisan route:cache
-```
-
-### Traditional Deployment (AWS/Railway)
-
-1. Clone and install:
-```bash
-git clone <repository-url>
-cd hng-country-api
-composer install --optimize-autoloader --no-dev
-```
-
-2. Configure environment:
-```bash
-cp .env.example .env
-# Edit .env with production settings
-php artisan key:generate
-```
-
-3. Run migrations:
-```bash
-php artisan migrate --force
-```
-
-4. Start queue workers (if using):
-```bash
-php artisan queue:work
-```
-
-## 📝 Database Schema
-
-```sql
-CREATE TABLE countries (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    name_normalized VARCHAR(255) UNIQUE NOT NULL,
-    capital VARCHAR(255) NULL,
-    region VARCHAR(100) NULL,
-    population BIGINT NOT NULL,
-    currency_code VARCHAR(10) NULL,
-    exchange_rate DOUBLE NULL,
-    estimated_gdp DOUBLE NULL,
-    flag_url TEXT NULL,
-    last_refreshed_at TIMESTAMP NULL,
-    created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
-);
-```
+- `400` - Bad Request (validation errors)
+- `404` - Not Found (country not found, image not found)
+- `500` - Internal Server Error
+- `503` - Service Unavailable (external API failures)
 
 ## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+3. Make your changes
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
 
 ## 📄 License
 
-MIT License
+This project is licensed under the MIT License.
 
-## 👤 Author
+## 🎯 HNG Task Compliance
 
-Built for HNG Stage 2 Backend Task
+This implementation fully complies with the HNG Backend Task requirements:
+
+- ✅ External API integration (REST Countries + Exchange Rates)
+- ✅ MySQL database with proper schema
+- ✅ All required endpoints implemented
+- ✅ Proper error handling and validation
+- ✅ GDP calculation with random multiplier
+- ✅ Image generation and serving
+- ✅ Comprehensive test coverage
+- ✅ Docker deployment ready
+- ✅ Clear documentation and setup instructions
+
+## 📞 Support
+
+For questions or issues, please open an issue in the GitHub repository or contact the development team.

@@ -20,7 +20,7 @@ hng-country-api/
 │       └── CountryFactory.php             ✅ Test data factory
 │
 ├── routes/
-│   └── api.php                            ✅ All API routes
+│   └── api.php                            ✅ All API routes (/api prefix)
 │
 ├── tests/
 │   └── Feature/
@@ -99,4 +99,7 @@ php quick-start.php
 ```
 
 Then choose your deployment method (Docker recommended)!
+
+
+
 

@@ -28,12 +28,12 @@ A **production-ready** REST API with:
    - Image generation (GD library)
 
 4. **Country Controller** ✅
-   - POST /countries/refresh
-   - GET /countries (with filters: region, currency, sort)
-   - GET /countries/{name}
-   - DELETE /countries/{name}
-   - GET /status
-   - GET /countries/image
+   - POST /api/countries/refresh
+   - GET /api/countries (with filters: region, currency, sort)
+   - GET /api/countries/{name}
+   - DELETE /api/countries/{name}
+   - GET /api/status
+   - GET /api/countries/image
 
 5. **Error Handling** ✅
    - 400 Validation errors
@@ -270,4 +270,7 @@ CREATE TABLE countries (
 ## 🎉 You're Ready to Deploy!
 
 Choose your deployment method and follow SETUP.md or README.md
+
+
+
 
