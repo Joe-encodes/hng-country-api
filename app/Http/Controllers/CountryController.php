@@ -22,16 +22,10 @@ class CountryController extends Controller
             $result = $this->countryService->refreshAll();
             return response()->json($result, 200);
         } catch (\Exception $e) {
-            if ($e->getCode() === 503) {
-                return response()->json([
-                    'error' => 'External data source unavailable',
-                    'details' => $e->getMessage(),
-                ], 503);
-            }
-
             return response()->json([
-                'error' => 'Internal server error',
-            ], 500);
+                'error' => 'External data source unavailable. No data was changed.',
+                'details' => 'External data source unavailable',
+            ], 503);
         }
     }
 
@@ -41,9 +35,17 @@ class CountryController extends Controller
     public function index(Request $request): JsonResponse
     {
         $filters = $request->only(['region', 'currency', 'sort']);
-        $result = $this->countryService->getAll($filters);
         
-        return response()->json($result, 200);
+        // Validate sort parameter
+        if (isset($filters['sort']) && !in_array($filters['sort'], ['gdp_desc', 'gdp_asc', 'population_desc', 'population_asc'])) {
+            return response()->json([
+                'error' => 'Validation failed',
+                'details' => ['sort' => 'Invalid sort parameter']
+            ], 400);
+        }
+        
+        $countries = $this->countryService->getAll($filters);
+        return response()->json($countries, 200);
     }
 
     /**
@@ -75,7 +77,7 @@ class CountryController extends Controller
             ], 404);
         }
 
-        return response()->json(null, 204);
+        return response()->json(['message' => 'Country deleted successfully'], 200);
     }
 
     /**
@@ -101,7 +103,11 @@ class CountryController extends Controller
         }
 
         $fullPath = Storage::disk('public')->path($summaryPath);
-        return response()->file($fullPath);
+        return response()->file($fullPath, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'public, max-age=300'
+        ]);
     }
 }
+
 
