@@ -12,8 +12,8 @@ class CountryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->country,
-            'name_normalized' => mb_strtolower($this->faker->country),
+            'name' => $name = $this->faker->unique()->country,
+            'name_normalized' => \Illuminate\Support\Str::slug(mb_strtolower($name)),
             'capital' => $this->faker->city,
             'region' => $this->faker->randomElement(['Africa', 'Americas', 'Asia', 'Europe', 'Oceania']),
             'population' => $this->faker->numberBetween(1000000, 1000000000),
@@ -25,4 +25,7 @@ class CountryFactory extends Factory
         ];
     }
 }
+
+
+
 
