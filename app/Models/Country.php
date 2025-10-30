@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Str;
 
 class Country extends Model
 {
+    use HasFactory;
+    
     protected $fillable = [
         'name',
         'name_normalized',
@@ -25,5 +29,19 @@ class Country extends Model
         'estimated_gdp' => 'double',
         'last_refreshed_at' => 'datetime',
     ];
+    
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::saving(function ($model) {
+            if ($model->isDirty('name')) {
+                $model->name_normalized = Str::slug(mb_strtolower($model->name));
+            }
+        });
+    }
 }
+
+
+
 
